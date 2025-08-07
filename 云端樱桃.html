@@ -6434,6 +6434,7 @@ async function exportBackup() {
     }
 }
 
+
 // ▼▼▼ 【最终修复版】请用这个唯一的、完整的函数，替换掉文件中所有的 importBackup 函数 ▼▼▼
 async function importBackup(file) {
     if (!file) return;
@@ -6451,7 +6452,7 @@ async function importBackup(file) {
         const text = await file.text();
         const data = JSON.parse(text);
 
-        // 1. 【回归稳定】我们使用您原来那段最可靠的、逐行写入数据库的代码
+        // 1. 【写入本地】我们使用您原来那段最可靠的、逐行写入数据库的代码
         await db.transaction('rw', db.tables, async () => {
             for (const table of db.tables) {
                 await table.clear();
@@ -6476,14 +6477,14 @@ async function importBackup(file) {
             if (data.qzoneSettings) await db.qzoneSettings.put(data.qzoneSettings);
         });
 
-        // 2. 【关键修复1】在写入本地后，立刻从这个最新的本地数据库中，把完整数据加载到程序“大脑”里
+        // 2. 【加载到内存】在写入本地后，立刻从这个最新的本地数据库中，把完整数据加载到程序“大脑”里
         await loadAllDataFromDB();
         
-        // 3. 【关键修复2】立刻将这份最新的、最完整的数据强制同步到云端，解决冲突bug
+        // 3. 【强制同步云端】立刻将这份最新的、最完整的数据强制同步到云端，解决冲突bug
         console.log("正在将新导入的数据强制同步到云端...");
         await saveDataToCloud();
 
-        // 4. 全部完成后，才提示用户并刷新
+        // 4. 【最终提示】全部完成后，才提示用户并刷新
         await showCustomAlert('导入并同步成功', '所有数据已成功恢复到本地，并已同步到云端！应用即将刷新。');
         
         setTimeout(() => {
